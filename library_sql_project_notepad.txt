@@ -1,0 +1,80 @@
+
+
+DROP TABLE IF EXISTS Loans;
+DROP TABLE IF EXISTS Members;
+DROP TABLE IF EXISTS Books;
+
+
+CREATE TABLE Books (
+    book_id INT AUTO_INCREMENT PRIMARY KEY,
+    title VARCHAR(255) NOT NULL,
+    author VARCHAR(255) NOT NULL,
+    genre VARCHAR(100),
+    available TINYINT(1) DEFAULT 1
+);
+
+
+CREATE TABLE Members (
+    member_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    join_date DATE
+);
+
+
+CREATE TABLE Loans (
+    loan_id INT AUTO_INCREMENT PRIMARY KEY,
+    book_id INT,
+    member_id INT,
+    loan_date DATE,
+    return_date DATE DEFAULT NULL,
+    CONSTRAINT fk_book FOREIGN KEY (book_id) REFERENCES Books(book_id),
+    CONSTRAINT fk_member FOREIGN KEY (member_id) REFERENCES Members(member_id)
+);
+
+
+INSERT INTO Books (title, author, genre) VALUES
+('The Alchemist', 'Paulo Coelho', 'Fiction'),
+('Clean Code', 'Robert C. Martin', 'Programming'),
+('Sapiens', 'Yuval Noah Harari', 'History');
+
+INSERT INTO Members (name, join_date) VALUES
+('Aarav Mehta', '2024-01-10'),
+('Sara Khan', '2024-02-20');
+
+INSERT INTO Loans (book_id, member_id, loan_date, return_date) VALUES
+(1, 1, '2025-07-01', NULL),
+(2, 2, '2025-06-15', '2025-06-25');
+
+
+
+
+SELECT L.loan_id, B.title, M.name, L.loan_date
+FROM Loans L
+JOIN Books B ON L.book_id = B.book_id
+JOIN Members M ON L.member_id = M.member_id
+WHERE L.return_date IS NULL;
+
+
+SELECT
+    B.title,
+    M.name,
+    L.loan_date,
+    GREATEST(DATEDIFF(CURDATE(), L.loan_date) - 14, 0) AS days_overdue,
+    GREATEST(DATEDIFF(CURDATE(), L.loan_date) - 14, 0) * 2 AS fine_amount
+FROM Loans L
+JOIN Books B ON L.book_id = B.book_id
+JOIN Members M ON L.member_id = M.member_id
+WHERE L.return_date IS NULL
+  AND DATEDIFF(CURDATE(), L.loan_date) > 14;
+
+
+SELECT genre, COUNT(*) AS total_books
+FROM Books
+GROUP BY genre;
+
+
+SELECT M.name, COUNT(*) AS total_loans
+FROM Loans L
+JOIN Members M ON L.member_id = M.member_id
+GROUP BY M.name
+HAVING COUNT(*) > 1;
